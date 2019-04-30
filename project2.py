@@ -41,10 +41,10 @@ import process        #    custom process class
 
 def refresh(processes):
     for proc in processes:
-        proc.done = False
-        proc.completed = 0
-        proc.running = False
-        proc.startTime = 0
+        proc.complete = False
+        proc.countComplete = 0
+        proc.active = False
+        proc.start = 0
 
 ## MAIN ALGORITHM EXECUTION
 
@@ -62,7 +62,7 @@ def execute( inputFile, frames, frameSize, timeMove):
                 p.size = int(arr[j])
             else:
                 time = arr[j].split('/')
-                p.arrivalTimes.append(int(time[0]))
+                p.arrTimes.append(int(time[0]))
                 p.endTimes.append(int(time[1]))
         procList.append(p)
     
@@ -217,24 +217,24 @@ def NonContiguous(processes, t_mem_move, frame_size, frame):
     while(1):
         ##CHECK FOR PROC DONE RUNNING
         for process in processes:
-            if(not process.done):
-                if (t == process.endTimes[process.completed] + process.startTime):
-                    if(process.running):
+            if(not process.complete):
+                if (t == process.endTimes[process.countComplete] + process.start):
+                    if(process.active):
                         print("time " + str(t)+ "ms: Process " + str(process.name) + " removed:")
                         for j in range(len(mem_arr)):
                             if (process.name == mem_arr[j]):
                                 mem_arr[j] = "."
-                        process.running = False
-                        process.completed += 1
-                        if (process.completed == len(process.endTimes)):
-                            process.done = True
+                        process.active = False
+                        process.countComplete += 1
+                        if (process.countComplete == len(process.endTimes)):
+                            process.complete = True
                             complete += 1
                         print_memory(mem_arr, frame, frame_size)
 
 
         ## CHECK FOR ARRIVING PROC
         for process in processes:
-            if (not process.done and (t == process.arrivalTimes[process.completed]) and not process.running):
+            if (not process.complete and (t == process.arrTimes[process.countComplete]) and not process.active):
                 print("time " + str(t) + "ms: Process " + str(process.name) + " arrived (requires " + str(process.size) + " frame)" )
                 count = 0
                 for j in range(len (mem_arr)):
@@ -248,15 +248,15 @@ def NonContiguous(processes, t_mem_move, frame_size, frame):
                                     mem_arr[k] = process.name
                                 if (count == process.size):
                                     break
-                            process.startTime = t
-                            process.running = True
+                            process.start = t
+                            process.active = True
                             print("time " + str(t) + "ms: Placed process " + str(process.name) + ":")
                             print_memory(mem_arr, frame, frame_size)
                             break
                     if (j == len(mem_arr) -1):
-                        process.completed+=1
-                        if (process.completed == len(process.endTimes)):
-                            process.done = True
+                        process.countComplete+=1
+                        if (process.countComplete == len(process.endTimes)):
+                            process.complete = True
                             complete +=1
                         print("time " + str(t)+ "ms: Cannot place process" +process.name +" -- skipped!" )
 
@@ -282,12 +282,12 @@ def NextFit(processes, t_mem_move, frame_size, frame):
 
 
     for i in range(len(processes)):
-        for j in range(len(processes[i].arrivalTimes)):
-            temp = [processes[i].arrivalTimes[j], 2, processes[i].name, processes[i].size, processes[i]]
+        for j in range(len(processes[i].arrTimes)):
+            temp = [processes[i].arrTimes[j], 2, processes[i].name, processes[i].size, processes[i]]
             queue.append(temp)
 
         for k in range(len(processes[i].endTimes)):
-            temp = [int(processes[i].endTimes[j])+int(processes[i].arrivalTimes[j]), 1, processes[i].name, processes[i].size, processes[i]]
+            temp = [int(processes[i].endTimes[j])+int(processes[i].arrTimes[j]), 1, processes[i].name, processes[i].size, processes[i]]
             queue.append(temp)
     queue.sort()
     final_process = 0
@@ -391,25 +391,25 @@ def FirstFit(frame, frame_size, processes, tMemMove, contig):
     else:
         print("time 0ms: Simulator started (Non-Contiguous)")
     while(True):
-        #while process is running
+        #while process isactive
         for i in processes:
-            check = not i.done and time == i.endTimes[i.completed] + i.startTime and i.running
+            check = not i.complete and time == i.endTimes[i.countComplete] + i.start and i.active
             if(check):
                 print("time %dms: Process %s removed:" %(time, i.name))
                 for j in range(len(memArr)):
                     if(memArr[j] == i.name):
                         memArr[j] = '.'
-                i.completed += 1          
-                i.running = False
-                if(i.completed == len(i.endTimes)):
+                i.countComplete += 1          
+                i.active = False
+                if(i.countComplete == len(i.endTimes)):
                     numComplete += 1
-                    i.done = True
+                    i.complete = True
                 print_memory(memArr, frame, frame_size)
 
 
         #Arrival Checks
         for i in processes:
-            if(not i.done and i.arrivalTimes[i.completed] == time and not i.running):
+            if(not i.complete and i.arrTimes[i.countComplete] == time and not i.active):
                 print("time %dms: Process %s arrived (requires %d frames)" %(time, i.name, i.size))
                 counter = 0
                 loc = 0
@@ -424,8 +424,8 @@ def FirstFit(frame, frame_size, processes, tMemMove, contig):
                         dots += 1
                         if(counter == i.size): #Size Check
                             print("time %dms: Placed process %s:" %(time, i.name))
-                            i.running = True
-                            i.startTime = time
+                            i.active = True
+                            i.start = time
                             for k in range(i.size):
                                 memArr[loc+k] = i.name
                             print_memory(memArr, frame, frame_size)
@@ -436,13 +436,13 @@ def FirstFit(frame, frame_size, processes, tMemMove, contig):
                             print("time %dms: Cannot place process %s -- starting defragmentation" %(time, i.name))
                             frames_moved = defragment(memArr, processes, time, tMemMove)
                             time += frames_moved*tMemMove
-                            i.startTime = time
+                            i.start = time
                             for k in processes:
-                                if(not k.done):
-                                    if k.running:
-                                        k.startTime += tMemMove*frames_moved
-                                    for l in range(k.completed,len(k.endTimes)):
-                                        k.arrivalTimes[l] += tMemMove*frames_moved
+                                if(not k.complete):
+                                    if k.active:
+                                        k.start += tMemMove*frames_moved
+                                    for l in range(k.countComplete,len(k.endTimes)):
+                                        k.arrTimes[l] += tMemMove*frames_moved
                             for k in range(len(memArr)):
                                 if(memArr[k] == '.'):
                                     for l in range(i.size):
@@ -450,15 +450,15 @@ def FirstFit(frame, frame_size, processes, tMemMove, contig):
                                     break
                             print("time %dms: Placed process %s:" %(time, i.name))
                             print_memory(memArr, frame, frame_size)
-                            i.running = True
+                            i.active = True
                         else: #Can't Defragment
                             counter = 0
                             loc = 0
                             defrag = False
-                            i.completed += 1
-                            if(i.completed == len(i.endTimes)):
+                            i.countComplete += 1
+                            if(i.countComplete == len(i.endTimes)):
                                 numComplete += 1
-                                i.done = True
+                                i.complete = True
                             print("time %dms: Cannot place process %s -- skipped!" %(time, i.name))
             
 
@@ -481,22 +481,22 @@ def BestFit(frame, frame_size, processes, tMemMove, contig):
     #begin simulation  
     print("time 0ms: Simulator started (Contiguous -- Best-Fit)")
     while(True):
-        #while processes running 
+        #while processes active 
         for i in processes:
-            if(not i.done and time == i.endTimes[i.completed] + i.startTime and i.running):
+            if(not i.complete and time == i.endTimes[i.countComplete] + i.start and i.active):
                 print("time %dms: Process %s removed:" %(time, i.name))
                 for j in range(len(memArr)):
                     if(memArr[j] == i.name):
                         memArr[j] = '.'
-                i.completed += 1          
-                i.running = False
-                if(i.completed == len(i.endTimes)):
+                i.countComplete += 1          
+                i.active = False
+                if(i.countComplete == len(i.endTimes)):
                     numComplete += 1
-                    i.done = True
+                    i.complete = True
                 print_memory(memArr, frame, frame_size)
         #Checking if a process is arriving
         for i in processes:
-            if(not i.done and i.arrivalTimes[i.completed] == time and not i.running):
+            if(not i.complete and i.arrTimes[i.countComplete] == time and not i.active):
                 print("time %dms: Process %s arrived (requires %d frames)" %(time, i.name, i.size))
                 counter = 0
                 dots = {}
@@ -516,8 +516,8 @@ def BestFit(frame, frame_size, processes, tMemMove, contig):
                     loc = -1
                     counters = 0
                     print("time %dms: Placed process %s:" %(time, i.name))
-                    i.running = True
-                    i.startTime = time
+                    i.active = True
+                    i.start = time
                     for x in dots:
                         if(loc == -1):
                             loc = x
@@ -532,13 +532,13 @@ def BestFit(frame, frame_size, processes, tMemMove, contig):
                     print("time %dms: Cannot place process %s -- starting defragmentation" %(time, i.name))
                     framesMoved = defragment(memArr, processes, time, tMemMove)
                     time += framesMoved*tMemMove
-                    i.startTime = time
+                    i.start = time
                     for x in processes:
-                        if(not x.done):
-                            if x.running:
-                                x.startTime += tMemMove*framesMoved
-                            for j in range(x.completed,len(x.endTimes)):
-                                x.arrivalTimes[j] += tMemMove*framesMoved
+                        if(not x.complete):
+                            if x.active:
+                                x.start += tMemMove*framesMoved
+                            for j in range(x.countComplete,len(x.endTimes)):
+                                x.arrTimes[j] += tMemMove*framesMoved
                     for x in range(len(memArr)):
                         if(memArr[x] == '.'):
                             for j in range(i.size):
@@ -546,14 +546,14 @@ def BestFit(frame, frame_size, processes, tMemMove, contig):
                             break
                     print("time %dms: Placed process %s:" %(time, i.name))
                     print_memory(memArr, frame, frame_size)
-                    i.running = True
+                    i.active = True
                 else: #Cant be Defragmented
                     counter = 0
                     loc = 0
-                    i.completed += 1
-                    if(i.completed == len(i.endTimes)):
+                    i.countComplete += 1
+                    if(i.countComplete == len(i.endTimes)):
                         numComplete += 1
-                        i.done = True
+                        i.complete = True
                     print("time %dms: Cannot place process %s -- skipped!" %(time, i.name))
         #All available processes are complete
         if(numComplete == len(processes)):
