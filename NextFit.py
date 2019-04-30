@@ -13,7 +13,6 @@ def update_index(memoryArr, frameSize, current_process):
 
 
 def update_last_index(memoryArr, frameSize):
-
     for i in range(0, len(memoryArr)):
         if memoryArr[i] == '.':
             return i
@@ -21,14 +20,12 @@ def update_last_index(memoryArr, frameSize):
 
 
 def check_for_fit(last_process, current_process, free_spots, memoryArr):
-
     for i in range(0, len(free_spots)):
         if (free_spots[i][1] >= current_process[3]):
             return True
     return False
 
 def find_free_spots(memoryArr, free_spots_pre, free_spots_post, last_process):
-
     i = 0
     while i < len(memoryArr):
 
@@ -215,12 +212,6 @@ def main(frame, frameSize, processes, tMemoryMove):
             free_spots_pre = []
             free_spots_post = []
             find_free_spots(memoryArr, free_spots_pre, free_spots_post, last_process)
-
-            # print(free_spots_pre)
-            # print(free_spots_post)
-
-            # update last process
-            # last_process = update_last_index(last_process, memoryArr)
 
 
     # end simulation
