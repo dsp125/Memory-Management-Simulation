@@ -293,7 +293,7 @@ def NextFit(processes, t_mem_move, frame_size, frame):
     final_process = 0
     free_spots(final_process, mem_arr, pre_free_spots, post_free_spots)
 
-    print("time 0ms: Simulator Started (Contiguous -- Next-Fit)")
+    print("time 0ms: Simulator started (Contiguous -- Next-Fit)")
     defrag_flag = False
 
     while queue != []:
