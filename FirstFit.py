@@ -1,24 +1,31 @@
 #!/usr/bin/python3
 
-def printMemory(frame, frame_size, memArr):
+def printMemory(frame, frameSize, memoryArr):
     print('='*frame)
-    for i in range(frame_size):
-        if(((i+1)%frame == 0 and i != 0) or i == frame_size-1):
-            print(memArr[i])
+    for i in range(frameSize):
+        if(((i+1)%frame == 0 and i != 0) or i == frameSize-1):
+            print(memoryArr[i])
         else:
-            print(memArr[i], end='')
+            print(memoryArr[i], end='')
     print('='*frame)
 
-def defragment(memArr, processes, time, tMemMove):
+def defragment(memoryArr, processes, t, tMemoryMove):
     moved = []
+    '''
+    for i in range(len(memoryArr)):
+        if(memoryArr[i] == '.'):
+            for j in range(i,len(memoryArr)):
+                if(memoryArr[j] != '.'):
+                    moved.append(memoryArr[j])
+    '''
 
     #Bubble sort by .'s
-    for i in range(len(memArr)):
-        for j in range(0,len(memArr)-i-1):
-            if(memArr[j] == '.' and memArr[j+1] != '.'):
-                if(memArr[j+1] not in moved):
-                    moved.append(memArr[j+1])
-                memArr[j], memArr[j+1] = memArr[j+1], memArr[j]
+    for i in range(len(memoryArr)):
+        for j in range(0,len(memoryArr)-i-1):
+            if(memoryArr[j] == '.' and memoryArr[j+1] != '.'):
+                if(memoryArr[j+1] not in moved):
+                    moved.append(memoryArr[j+1])
+                memoryArr[j], memoryArr[j+1] = memoryArr[j+1], memoryArr[j]
     
     formatedString = ''
     for i in range(len(moved)):
@@ -27,104 +34,106 @@ def defragment(memArr, processes, time, tMemMove):
         else:
             formatedString += moved[i] + ", "
     
-    frames_moved = 0
+    framesMoved = 0
     for i in processes:
         if i.name in moved:
-            frames_moved += i.size
-    time += frames_moved*tMemMove
-    print("time %dms: Defragmentation complete (moved %d frames: %s)" %(time, frames_moved, formatedString))
-    return frames_moved
+            framesMoved += i.size
+    t += framesMoved*tMemoryMove
+    print("time %dms: Defragmentation complete (moved %d frames: %s)" %(t, framesMoved, formatedString))
+    return framesMoved
 
 
-def main(frame, frame_size, processes, tMemMove, contig):
-    memArr = ['.']*frame_size
-    time = 0
-    numComplete = 0
+def main(frame, frameSize, processes, tMemoryMove, contiguous):
+    memoryArr = ['.']*frameSize
+    t = 0
+    completed = 0
 
-    #Start Simulating Print Statements
-
-    if(contig):
+    #Simulation start
+    if(contiguous):
         print("time 0ms: Simulator started (Contiguous -- First-Fit)")
     else:
         print("time 0ms: Simulator started (Non-Contiguous)")
     while(True):
-        #while process is running
+
+        #Checking if a process is done running
         for i in processes:
-            check = not i.done and time == i.endTimes[i.completed] + i.startTime and i.running
-            if(check):
-                print("time %dms: Process %s removed:" %(time, i.name))
-                for j in range(len(memArr)):
-                    if(memArr[j] == i.name):
-                        memArr[j] = '.'
+            if(not i.done and t == i.endTimes[i.completed] + i.startTime and i.running):
+                print("time %dms: Process %s removed:" %(t, i.name))
+                for j in range(len(memoryArr)):
+                    if(memoryArr[j] == i.name):
+                        memoryArr[j] = '.'
                 i.completed += 1          
                 i.running = False
                 if(i.completed == len(i.endTimes)):
-                    numComplete += 1
+                    completed += 1
                     i.done = True
-                printMemory(frame, frame_size, memArr)
+                printMemory(frame, frameSize, memoryArr)
 
-        #Arrival Checks
+        #Checking if a process is arriving
         for i in processes:
-            if(not i.done and i.arrivalTimes[i.completed] == time and not i.running):
-                print("time %dms: Process %s arrived (requires %d frames)" %(time, i.name, i.size))
-                counter = 0
-                loc = 0
-                dots = 0
-                for j in range(len(memArr)): #Can be added?
-                    if(memArr[j] != '.'):
-                        counter = 0
+            if(not i.done and i.arrivalTimes[i.completed] == t and not i.running):
+                print("time %dms: Process %s arrived (requires %d frames)" %(t, i.name, i.size))
+                count = 0
+                location = 0
+                numDots = 0
+                for j in range(len(memoryArr)): #Checking if it can be added
+                    if(memoryArr[j] != '.'):
+                        count = 0
                     else:
-                        if(counter == 0):
-                            loc = j
-                        counter += 1
-                        dots += 1
-                        if(counter == i.size): #Size Check
-                            print("time %dms: Placed process %s:" %(time, i.name))
+                        if(count == 0):
+                            location = j
+                        count += 1
+                        numDots += 1
+                        if(count == i.size): #Enough space for process
+                            print("time %dms: Placed process %s:" %(t, i.name))
                             i.running = True
-                            i.startTime = time
+                            i.startTime = t
                             for k in range(i.size):
-                                memArr[loc+k] = i.name
-                            printMemory(frame, frame_size, memArr)
+                                memoryArr[location+k] = i.name
+                            printMemory(frame, frameSize, memoryArr)
                             break
                     
-                    if(j == len(memArr)-1): #If At Capacity
-                        if(contig and numDots >= i.size): #Start Defragmentation
-                            print("time %dms: Cannot place process %s -- starting defragmentation" %(time, i.name))
-                            frames_moved = defragment(memArr, processes, time, tMemMove)
-                            time += frames_moved*tMemMove
-                            i.startTime = time
+                    if(j == len(memoryArr)-1): #Not enought space
+                        if(contiguous and numDots >= i.size): #Eligible for defragmentation
+                            print("time %dms: Cannot place process %s -- starting defragmentation" %(t, i.name))
+                            framesMoved = defragment(memoryArr, processes, t, tMemoryMove)
+                            t += framesMoved*tMemoryMove
+                            i.startTime = t
                             for k in processes:
                                 if(not k.done):
                                     if k.running:
-                                        k.startTime += tMemMove*frames_moved
+                                        k.startTime += tMemoryMove*framesMoved
                                     for l in range(k.completed,len(k.endTimes)):
-                                        k.arrivalTimes[l] += tMemMove*frames_moved
-                            for k in range(len(memArr)):
-                                if(memArr[k] == '.'):
+                                        #k.endTimes[l] += tMemoryMove*framesMoved
+                                        k.arrivalTimes[l] += tMemoryMove*framesMoved
+                            for k in range(len(memoryArr)):
+                                if(memoryArr[k] == '.'):
                                     for l in range(i.size):
-                                        memArr[k+l] = i.name
+                                        memoryArr[k+l] = i.name
                                     break
-                            print("time %dms: Placed process %s:" %(time, i.name))
-                            printMemory(frame, frame_size, memArr)
+                            print("time %dms: Placed process %s:" %(t, i.name))
+                            printMemory(frame, frameSize, memoryArr)
                             i.running = True
-                        else: #Can't Defragment
-                            counter = 0
-                            loc = 0
-                            defrag = False
+                        else: #Not eligible for defragmentation
+                            count = 0
+                            location = 0
+                            defragged = False
                             i.completed += 1
                             if(i.completed == len(i.endTimes)):
-                                numComplete += 1
+                                completed += 1
                                 i.done = True
-                            print("time %dms: Cannot place process %s -- skipped!" %(time, i.name))
+                            print("time %dms: Cannot place process %s -- skipped!" %(t, i.name))
             
 
-        #Done with processes
-        if(numComplete == len(processes)):
+        #All processes completed
+        if(completed == len(processes)):
             break
-        time += 1
+
+        #Increment time
+        t += 1
         
-    #Done but for real this time
-    if(contig):
-        print("time %dms: Simulator ended (Contiguous -- First-Fit)\n" %(time))
+    #Simulation is over
+    if(contiguous):
+        print("time %dms: Simulator ended (Contiguous -- First-Fit)\n" %(t))
     else:
-        print("time %dms: Simulator ended (Non-Contiguous)" %(time))
+        print("time %dms: Simulator ended (Non-Contiguous)" %(t))

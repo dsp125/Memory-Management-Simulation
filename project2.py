@@ -68,6 +68,10 @@ def execute( inputFile, frames, frameSize, timeMove):
     
     procList_copy = copy.deepcopy(procList)
 
+    procList_copy_1 = copy.deepcopy(procList)
+
+    procList_copy_2 = copy.deepcopy(procList)
+
     FirstFit(frames, frameSize, procList, timeMove, True)
     refresh(procList)
 
@@ -76,10 +80,10 @@ def execute( inputFile, frames, frameSize, timeMove):
     NextFit(procList_copy,timeMove, frameSize, frames)
     refresh(procList)
     
-    BestFit(frames, frameSize, procList, timeMove, False)
+    BestFit(frames, frameSize, procList_copy_1, timeMove, False)
     refresh(procList)
     
-    NonContiguous(procList, timeMove,frameSize,  frames)
+    NonContiguous(procList_copy_2, timeMove,frameSize,  frames)
 
 ## HELPER FUNCTIONS
 def print_memory(mem_arr, frame, frame_size):
@@ -100,25 +104,26 @@ def defrag(processes, t_mem_move, t, mem_arr):
     for i in range(len (mem_arr)):
         inner_loop = len(mem_arr) - i - 1
         for j in range(inner_loop):
-            if (mem_arr[j] == "."):
-                if (mem_arr[j+1] != "."):
-                    if ( mem_arr[j + 1] not in move):
-                        move.append(mem_arr[ j + 1])
-                    temp = mem_arr[j]
-                    mem_arr[j] = mem_arr[j + 1]
-                    mem_arr[j + 1] = temp
+            if (mem_arr[j] == "." and mem_arr[j+1] != "."):
+                if ( mem_arr[j + 1] not in move):
+                    move.append(mem_arr[ j + 1])
+                temp = mem_arr[j]
+                mem_arr[j] = mem_arr[j + 1]
+                mem_arr[j + 1] = temp
 
+    output_frames = ""
+    for i in range(len(move)):
+        output_frames += move[i]
+        if (i != len(move) - 1):
+            output_frames += ", "
+
+    
     moved_frames = 0
     for process in processes:
         if process.name in move:
             moved_frames += process.size
     t += (moved_frames * t_mem_move)
 
-    output_frames = ""
-    for i in range(len(move)):
-        output_frames += move[i]
-        if (i != len(moved) - 1):
-            output_frames += ", "
 
     print("time " + str(t) + "ms: Defragmentation complete (moved " + str(moved_frames) + " frames: " + output_frames + ")")
     return moved_frames
@@ -148,7 +153,7 @@ def free_spots(final_process, mem_arr, pre_free_spots, post_free_spots):
 
 
 def fit_check(curr_process, free_spots):
-    for i in range(0, len(free_spots)):
+    for i in range(len(free_spots)):
         if (free_spots[i][1] >= curr_process[3]):
             return True
     return False
@@ -207,6 +212,12 @@ def update_last(mem_arr, frame_size):
             return i
     return frame_size
 
+
+def clear_process(curr_process, mem_arr):
+    for i in range(len(mem_arr)):
+        if mem_arr[i] == curr_process[2]:
+            mem_arr[i] = "."
+
 ##ALGORITHMS
 def NonContiguous(processes, t_mem_move, frame_size, frame):
     print("time 0ms: Simulator started (Non-Contiguous)")
@@ -235,7 +246,7 @@ def NonContiguous(processes, t_mem_move, frame_size, frame):
         ## CHECK FOR ARRIVING PROC
         for process in processes:
             if (not process.complete and (t == process.arrTimes[process.countComplete]) and not process.active):
-                print("time " + str(t) + "ms: Process " + str(process.name) + " arrived (requires " + str(process.size) + " frame)" )
+                print("time " + str(t) + "ms: Process " + str(process.name) + " arrived (requires " + str(process.size) + " frames)" )
                 count = 0
                 for j in range(len (mem_arr)):
                     if (mem_arr[j] == "."):
@@ -258,7 +269,7 @@ def NonContiguous(processes, t_mem_move, frame_size, frame):
                         if (process.countComplete == len(process.endTimes)):
                             process.complete = True
                             complete +=1
-                        print("time " + str(t)+ "ms: Cannot place process" +process.name +" -- skipped!" )
+                        print("time " + str(t)+ "ms: Cannot place process " +process.name +" -- skipped!" )
 
 
         if (complete == len(processes)): # DONE WITH ALL PROCESS
@@ -269,16 +280,13 @@ def NonContiguous(processes, t_mem_move, frame_size, frame):
     ##EXIT SIMULATION
     print("time " + str(t) + "ms: Simulator ended (Non-Contiguous)")
 
-def clear_process(curr_process, mem_arr):
-    for i in range(len(mem_arr)):
-        if mem_arr[i] == curr_process[2]:
-            mem_arr[i] = "."
 
 def NextFit(processes, t_mem_move, frame_size, frame):
     mem_arr = ["."] * frame_size
     queue = []
     pre_free_spots = []
     post_free_spots = []
+    t = 0
 
 
     for i in range(len(processes)):
@@ -287,7 +295,7 @@ def NextFit(processes, t_mem_move, frame_size, frame):
             queue.append(temp)
 
         for k in range(len(processes[i].endTimes)):
-            temp = [int(processes[i].endTimes[j])+int(processes[i].arrTimes[j]), 1, processes[i].name, processes[i].size, processes[i]]
+            temp = [int(processes[i].endTimes[k])+int(processes[i].arrTimes[k]), 1, processes[i].name, processes[i].size, processes[i]]
             queue.append(temp)
     queue.sort()
     final_process = 0
@@ -324,16 +332,15 @@ def NextFit(processes, t_mem_move, frame_size, frame):
 
             else:
                 sumation = 0
-                all_free_spots = free_spots_pre+free_spots_post
+                all_free_spots = pre_free_spots+post_free_spots
                 for i in range(len(all_free_spots)):
-                    sumation += free_spots[i][1]
+                    sumation += all_free_spots[i][1]
                 
                 if sumation >= curr_process[3]:
                     defrag_flag = True
-                    print("time", str(t)+"ms: Cannot place process", curr_process[2], "-- starting defragmentation!")
-
-
+                    print("time", str(t)+"ms: Cannot place process", curr_process[2], "-- starting defragmentation")
                     moved_frames = defrag(processes, t_mem_move, t, mem_arr)
+        
                     t = (moved_frames*t_mem_move) + t
 
                     for i in range(len(queue)):
@@ -349,7 +356,7 @@ def NextFit(processes, t_mem_move, frame_size, frame):
                 else:
                     print("time", str(t)+"ms: Cannot place process", curr_process[2], "-- skipped!")
                     queue.pop(0)
-                    for i in range(queue):
+                    for i in range(len(queue)):
                         if curr_process[2] in queue[i]:
                             index = i
                             break
@@ -366,18 +373,6 @@ def NextFit(processes, t_mem_move, frame_size, frame):
 
     # end simulation
     print("time", str(t)+ "ms: Simulator ended (Contiguous -- Next-Fit)\n")
-
-
-
-
-
-
-
-
-
-
-
-
 
 def FirstFit(frame, frame_size, processes, tMemMove, contig):
     memArr = ['.']*frame_size
@@ -434,7 +429,7 @@ def FirstFit(frame, frame_size, processes, tMemMove, contig):
                     if(j == len(memArr)-1): #If At Capacity
                         if(contig and dots >= i.size): #Start Defragmentation
                             print("time %dms: Cannot place process %s -- starting defragmentation" %(time, i.name))
-                            frames_moved = defragment(memArr, processes, time, tMemMove)
+                            frames_moved = defrag(processes, tMemMove, time, memArr)
                             time += frames_moved*tMemMove
                             i.start = time
                             for k in processes:
@@ -454,7 +449,7 @@ def FirstFit(frame, frame_size, processes, tMemMove, contig):
                         else: #Can't Defragment
                             counter = 0
                             loc = 0
-                            defrag = False
+                            # defrag = False
                             i.countComplete += 1
                             if(i.countComplete == len(i.endTimes)):
                                 numComplete += 1
@@ -496,12 +491,13 @@ def BestFit(frame, frame_size, processes, tMemMove, contig):
                 print_memory(memArr, frame, frame_size)
         #Checking if a process is arriving
         for i in processes:
+            # print("PROCESS NAME: " + i.name + " COMPLETE: " + str(i.complete) + " ARR TIME: " + str(i.arrTimes[i.countComplete]) + " ACTIVE: " + str(i.active) + " INDEX: " + str(i.countComplete))
             if(not i.complete and i.arrTimes[i.countComplete] == time and not i.active):
                 print("time %dms: Process %s arrived (requires %d frames)" %(time, i.name, i.size))
                 counter = 0
                 dots = {}
                 loc = 0
-                num_dots = 0
+                num_dots = 0 
                 for j in range(len(memArr)): #Checking if it can be added
                     if(memArr[j] != '.'):
                         counter = 0
@@ -530,7 +526,7 @@ def BestFit(frame, frame_size, processes, tMemMove, contig):
                     print_memory(memArr, frame, frame_size)
                 elif(num_dots >= i.size): #Defragmentation
                     print("time %dms: Cannot place process %s -- starting defragmentation" %(time, i.name))
-                    framesMoved = defragment(memArr, processes, time, tMemMove)
+                    framesMoved = defrag(processes, tMemMove, time, memArr)
                     time += framesMoved*tMemMove
                     i.start = time
                     for x in processes:
