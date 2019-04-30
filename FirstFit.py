@@ -117,14 +117,12 @@ def main(frame, frame_size, processes, tMemMove, contig):
                             print("time %dms: Cannot place process %s -- skipped!" %(time, i.name))
             
 
-        #All processes completed
+        #Done with processes
         if(numComplete == len(processes)):
             break
-
-        #Increment time
         time += 1
         
-    #Simulation is over
+    #Done but for real this time
     if(contig):
         print("time %dms: Simulator ended (Contiguous -- First-Fit)\n" %(time))
     else:
