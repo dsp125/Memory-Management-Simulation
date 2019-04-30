@@ -87,7 +87,7 @@ def execute( inputFile, frames, frameSize, timeMove):
 	
     NonContiguous(frames, frameSize, procList, timeMove, False)
 
-## HELP
+## HELPER FUNCTIONS
 def print_memory(mem_arr, frame, frame_size):
     print("="* frame)
     for i in range(frame_size):
