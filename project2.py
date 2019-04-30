@@ -432,7 +432,7 @@ def FirstFit(frame, frame_size, processes, tMemMove, contig):
                             break
                     
                     if(j == len(memArr)-1): #If At Capacity
-                        if(contig and numDots >= i.size): #Start Defragmentation
+                        if(contig and dots >= i.size): #Start Defragmentation
                             print("time %dms: Cannot place process %s -- starting defragmentation" %(time, i.name))
                             frames_moved = defragment(memArr, processes, time, tMemMove)
                             time += frames_moved*tMemMove
