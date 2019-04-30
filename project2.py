@@ -134,9 +134,62 @@ def defrag(processes, t_mem_move, t, mem_arr):
 ##ALGORITHMS
 def NonContiguous(processes, t_mem_move, frame_size, frame):
     print("time 0ms: Simulator started (Non-Contiguous)")
-    compete = 0
+    complete = 0
     mem_arr = ["."] * frame_size
     t = 0
+
+    while(1):
+        ##CHECK FOR PROC DONE RUNNING
+        for process in processes:
+            if(not process.done):
+                if (t == process.endTimes[process.completed] + process.startTime):
+                    if(process.running):
+                        print("time " + str(t)"ms: Process " + str(process.name) + " removed:")
+                        for j in range(len(mem_arr)):
+                            if (process.name == mem_arr[j]):
+                                mem_arr[j] = "."
+                        process.running = False
+                        process.completed += 1
+                        if (process.completed == len(process.endTimes)):
+                            process.done = True
+                            complete += 1
+                        print_memory(mem_arr, frame, frame_size)
+
+
+        ## CHECK FOR ARRIVING PROC
+        for process in processes:
+            if (t == process.arrivalTimes[process.completed]):
+                if (not process.done):
+                    if (not process.running):
+                        print("time " + str(t) + "ms: Process " + str(process.name) + " arrived (requires " + str(process.size) + " frame)" )
+                        count = 0
+                        for j in range(len (mem_arr)):
+                            if (mem_arr[j] == "."):
+                                count+=1
+                                if (count == process.size):
+                                    count = 0
+                                    for k in range(len (mem_arr)):
+                                        if (mem_arr[k] == "."):
+                                            count+=1
+                                            mem_arr[k] = process.name
+                                        if (count == process.size):
+                                            break
+                                    process.startTime = t
+                                    process.running = True
+                                    print("time " + str(t) + "ms: Placed process " + str(process.name) + ":")
+                                    print_memory(mem_arr, frame, frame_size)
+
+
+        if (complete == len (process)): # DONE WITH ALL PROCESS
+            break
+
+        t += 1
+
+    ##EXIT SIMULATION
+    print("time " + str(t) + "ms: Simulator ended (Non-Contiguous)")
+                                
+
+
 
 
 
