@@ -10,32 +10,32 @@
       
 
 Test Terminal Inputs:
-	
+    
       DESCRIPTION:
       
              - In an operating system, each process has specific memory requirements. These memory requirements
-			 are met (or not) based on whether free memory is available to fulfill such requirements. In this project,
-			 contiguous and non-contiguous memory allocation schemes will be simulated. For contiguous memory 
-			 allocation, a dynamic partitioning scheme will be implemented.
+             are met (or not) based on whether free memory is available to fulfill such requirements. In this project,
+             contiguous and non-contiguous memory allocation schemes will be simulated. For contiguous memory 
+             allocation, a dynamic partitioning scheme will be implemented.
        
       ARGUMENTS:
       
                      - argv[1]: The first command-line argument specifies the number of frames to show on a line. The examples 
-								show 32 frames per line. Note that this value might not be a power of two.
+                                show 32 frames per line. Note that this value might not be a power of two.
                      - argv[2]: The second command-line argument specifies the size of the memory, i.e., how many frames 
-								make up the physical memory. The examples show a memory consisting of 256 frames. Note that 
-								this value might not be a power of two.
+                                make up the physical memory. The examples show a memory consisting of 256 frames. Note that 
+                                this value might not be a power of two.
                      - argv[3]: The third command-line argument specifies the name of the input file to read in for your simulation
                      - argv[4]: The fourth command-line argument defines tmemmove, which is the time, in milliseconds, 
-								that it takes to move one frame of memory during defragmentation.  
+                                that it takes to move one frame of memory during defragmentation.  
 """
 
 ##CLASS AND FILE IMPORTS
 
 import sys
-import copy			#	used for deepcopy of proc list
+import copy            #    used for deepcopy of proc list
 
-import process		#	custom process class
+import process        #    custom process class
 
 ## REFRESH PROC LIST
 
@@ -70,14 +70,14 @@ def execute( inputFile, frames, frameSize, timeMove):
 
     FirstFit(frames, frameSize, procList, timeMove, True)
     refresh(procList)
-	
+    
     NextFit(frames, frameSize, procList_copy, timeMove)
     refresh(procList)
-	
+    
     BestFit(frames, frameSize, procList, timeMove, False)
     refresh(procList)
-	
-    NonContiguous(frames, frameSize, procList, timeMove, False)
+    
+    NonContiguous(procList, timeMove,frames, frameSize)
 
 ## HELPER FUNCTIONS
 def print_memory(mem_arr, frame, frame_size):
@@ -189,7 +189,7 @@ def NonContiguous(processes, t_mem_move, frame_size, frame):
             if(not process.done):
                 if (t == process.endTimes[process.completed] + process.startTime):
                     if(process.running):
-                        print("time " + str(t)"ms: Process " + str(process.name) + " removed:")
+                        print("time " + str(t)+ "ms: Process " + str(process.name) + " removed:")
                         for j in range(len(mem_arr)):
                             if (process.name == mem_arr[j]):
                                 mem_arr[j] = "."
@@ -354,7 +354,7 @@ def remove_process(current_process, memoryArr):
             memoryArr[i] = '.'
 
 
-def main(frame, frameSize, processes, tMemoryMove):
+def NextFit(frame, frameSize, processes, tMemoryMove):
 
     # define data structure
     memoryArr = ['.']*frameSize
