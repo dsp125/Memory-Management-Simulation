@@ -32,10 +32,14 @@ Test Terminal Inputs:
 
 ##CLASS AND FILE IMPORTS
 
+from __future__ import print_function
 import sys
 import copy            #    used for deepcopy of proc list
 
 import process        #    custom process class
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 ## REFRESH PROC LIST
 
@@ -562,40 +566,54 @@ def BestFit(frame, frame_size, processes, tMemMove, contig):
 
 if __name__ == "__main__":
     #Argument Check
-    if(len(sys.argv) < 5):
+    if(len(sys.argv) != 5):
         print("Invalid number of arguments provided")
+        
+        ##
+        ##
+        
+        outString = ""
+        for i in range(1, len(sys.argv)):
+            outString += sys.argv[i] + " "
+        eprint("command: "  + outString)
+        
+        ##
+        ##
+        
         sys.exit()
+        
+    else:
+        
+        #Frame Check
+        frames = sys.argv[1]
+        try:
+            frames = int(frames)
+        except:
+            print("Invalid number of frames provided (not integer)")
+            sys.exit()
 
-    #Frame Check
-    frames = sys.argv[1]
-    try:
-        frames = int(frames)
-    except:
-        print("Invalid number of frames provided (not integer)")
-        sys.exit()
+        #Frame Size Check
+        frameSize = sys.argv[2]
+        try:
+            frameSize = int(frameSize)
+        except:
+            print("Invalid frame size provided (not integer)")
+            sys.exit()
 
-    #Frame Size Check
-    frameSize = sys.argv[2]
-    try:
-        frameSize = int(frameSize)
-    except:
-        print("Invalid frame size provided (not integer)")
-        sys.exit()
+        #Infile Check
+        try:
+            #print(argv[3])
+            inputFile = open(sys.argv[3], 'r')
+        except:
+            print("Input file does not exist")
+            sys.exit()
 
-    #Infile Check
-    try:
-        #print(argv[3])
-        inputFile = open(sys.argv[3], 'r')
-    except:
-        print("Input file does not exist")
-        sys.exit()
-
-    #Time for Memory Move Check
-    timeMove = sys.argv[4]
-    try:
-        timeMove = int(timeMove)
-    except:
-        print("Invalid time provided for memory move (not integer)")
-        sys.exit()
+        #Time for Memory Move Check
+        timeMove = sys.argv[4]
+        try:
+            timeMove = int(timeMove)
+        except:
+            print("Invalid time provided for memory move (not integer)")
+            sys.exit()
     
     execute(inputFile, frames, frameSize, timeMove)
