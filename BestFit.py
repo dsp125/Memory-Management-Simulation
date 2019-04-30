@@ -48,11 +48,10 @@ def main(frame, frame_size, processes, tMemMove, contiguous):
     time = 0
     numComplete = 0
 
-    #Simulation start
+    #begin simulation  
     print("time 0ms: Simulator started (Contiguous -- Best-Fit)")
     while(True):
-
-        #Checking if a process is done running
+        #while processes running 
         for i in processes:
             if(not i.done and time == i.endTimes[i.completed] + i.startTime and i.running):
                 print("time %dms: Process %s removed:" %(time, i.name))
@@ -65,7 +64,6 @@ def main(frame, frame_size, processes, tMemMove, contiguous):
                     numComplete += 1
                     i.done = True
                 printMemory(frame, frame_size, memArr)
-
         #Checking if a process is arriving
         for i in processes:
             if(not i.done and i.arrivalTimes[i.completed] == time and not i.running):
@@ -84,7 +82,6 @@ def main(frame, frame_size, processes, tMemMove, contiguous):
                         num_dots += 1
                         if(counter >= i.size): #Enough space for process
                             dots[loc] = counter
-
                 if(len(dots) > 0):
                     loc = -1
                     counters = 0
@@ -128,14 +125,9 @@ def main(frame, frame_size, processes, tMemMove, contiguous):
                         numComplete += 1
                         i.done = True
                     print("time %dms: Cannot place process %s -- skipped!" %(time, i.name))
-            
-
-        #All processes completed
+        #All available processes are complete
         if(numComplete == len(processes)):
             break
-
-        #Increment time
-        time += 1
-        
-    #Simulation is over
+        time += 1    
+    #Completed the simulation. Congrats!
     print("time %dms: Simulator ended (Contiguous -- Best-Fit)\n" %(time))
