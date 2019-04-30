@@ -50,7 +50,8 @@ def main(frame, frame_size, processes, tMemMove, contig):
     while(True):
         #while process is running
         for i in processes:
-            if(not i.done and time == i.endTimes[i.completed] + i.startTime and i.running):
+            check = not i.done and time == i.endTimes[i.completed] + i.startTime and i.running
+            if(check):
                 print("time %dms: Process %s removed:" %(time, i.name))
                 for j in range(len(memArr)):
                     if(memArr[j] == i.name):
