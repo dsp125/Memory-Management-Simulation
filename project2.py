@@ -70,14 +70,16 @@ def execute( inputFile, frames, frameSize, timeMove):
 
     FirstFit(frames, frameSize, procList, timeMove, True)
     refresh(procList)
+
+    #processes, t_mem_move, frame_size, frame
     
-    NextFit(frames, frameSize, procList_copy, timeMove)
+    NextFit(procList_copy,timeMove, frameSize, frames)
     refresh(procList)
     
     BestFit(frames, frameSize, procList, timeMove, False)
     refresh(procList)
     
-    NonContiguous(procList, timeMove,frames, frameSize)
+    NonContiguous(procList, timeMove,frameSize,  frames)
 
 ## HELPER FUNCTIONS
 def print_memory(mem_arr, frame, frame_size):
@@ -121,7 +123,6 @@ def defrag(processes, t_mem_move, t, mem_arr):
     print("time " + str(t) + "ms: Defragmentation complete (moved " + str(moved_frames) + " frames: " + output_frames + ")")
     return moved_frames
 
-'''
 def free_spots(final_process, mem_arr, pre_free_spots, post_free_spots):
     i = 0
     while i < len(mem_arr):
@@ -148,12 +149,12 @@ def free_spots(final_process, mem_arr, pre_free_spots, post_free_spots):
 
 def fit_check(curr_process, free_spots):
     for i in range(0, len(free_spots)):
-        if (free_spots[i][1] >= current_process[3]):
+        if (free_spots[i][1] >= curr_process[3]):
             return True
     return False
 
 
-def place_process(cur_process, memoryArr, free_spots_pre, free_spots_post):
+def place_process(cur_process, mem_arr, free_spots_pre, free_spots_post):
 
     found = False
     for i in range(0, len(free_spots_post)):
@@ -161,7 +162,7 @@ def place_process(cur_process, memoryArr, free_spots_pre, free_spots_post):
             found = True
 
             for j in range(free_spots_post[i][0], free_spots_post[i][0]+cur_process[3]):
-                memoryArr[j] = cur_process[2]
+                mem_arr[j] = cur_process[2]
 
             break
 
@@ -171,11 +172,41 @@ def place_process(cur_process, memoryArr, free_spots_pre, free_spots_post):
                 found = True
 
                 for j in range(free_spots_pre[i][0], free_spots_pre[i][0]+cur_process[3]):
-                    memoryArr[j] = cur_process[2]
+                    mem_arr[j] = cur_process[2]
 
                 break
 
-'''
+def update(mem_arr, frame_size, cur_process):
+    for i in range(len(mem_arr)):
+        if (mem_arr[i-1] == cur_process[2]) and (mem_arr[i] != cur_process[2]):
+            return i
+    return frame_size
+
+
+def set_process(cur_process, mem_Arr, pre_free_spots, post_free_spots):
+
+    found = False
+    for i in range(len(post_free_spots)):
+        if post_free_spots[i][1] >= cur_process[3]:
+            found = True
+            for j in range(post_free_spots[i][0], post_free_spots[i][0]+cur_process[3]):
+                mem_Arr[j] = cur_process[2]
+            break
+
+    if found == False:
+        for i in range(len(pre_free_spots)):
+            if pre_free_spots[i][1] >= cur_process[3]:
+                for j in range(pre_free_spots[i][0], pre_free_spots[i][0]+cur_process[3]):
+                    mem_Arr[j] = cur_process[2]
+
+                break
+
+def update_last(mem_arr, frame_size):
+    for i in range(len(mem_arr)):
+        if mem_arr[i] == ".":
+            return i
+    return frame_size
+
 ##ALGORITHMS
 def NonContiguous(processes, t_mem_move, frame_size, frame):
     print("time 0ms: Simulator started (Non-Contiguous)")
@@ -203,36 +234,46 @@ def NonContiguous(processes, t_mem_move, frame_size, frame):
 
         ## CHECK FOR ARRIVING PROC
         for process in processes:
-            if (t == process.arrivalTimes[process.completed]):
-                if (not process.done):
-                    if (not process.running):
-                        print("time " + str(t) + "ms: Process " + str(process.name) + " arrived (requires " + str(process.size) + " frame)" )
-                        count = 0
-                        for j in range(len (mem_arr)):
-                            if (mem_arr[j] == "."):
-                                count+=1
+            if (not process.done and (t == process.arrivalTimes[process.completed]) and not process.running):
+                print("time " + str(t) + "ms: Process " + str(process.name) + " arrived (requires " + str(process.size) + " frame)" )
+                count = 0
+                for j in range(len (mem_arr)):
+                    if (mem_arr[j] == "."):
+                        count+=1
+                        if (count == process.size):
+                            count = 0
+                            for k in range(len (mem_arr)):
+                                if (mem_arr[k] == "."):
+                                    count+=1
+                                    mem_arr[k] = process.name
                                 if (count == process.size):
-                                    count = 0
-                                    for k in range(len (mem_arr)):
-                                        if (mem_arr[k] == "."):
-                                            count+=1
-                                            mem_arr[k] = process.name
-                                        if (count == process.size):
-                                            break
-                                    process.startTime = t
-                                    process.running = True
-                                    print("time " + str(t) + "ms: Placed process " + str(process.name) + ":")
-                                    print_memory(mem_arr, frame, frame_size)
+                                    break
+                            process.startTime = t
+                            process.running = True
+                            print("time " + str(t) + "ms: Placed process " + str(process.name) + ":")
+                            print_memory(mem_arr, frame, frame_size)
+                            break
+                    if (j == len(mem_arr) -1):
+                        process.completed+=1
+                        if (process.completed == len(process.endTimes)):
+                            process.done = True
+                            complete +=1
+                        print("time " + str(t)+ "ms: Cannot place process" +process.name +" -- skipped!" )
 
 
-        if (complete == len (process)): # DONE WITH ALL PROCESS
+        if (complete == len(processes)): # DONE WITH ALL PROCESS
             break
 
         t += 1
 
     ##EXIT SIMULATION
     print("time " + str(t) + "ms: Simulator ended (Non-Contiguous)")
-'''
+
+def clear_process(curr_process, mem_arr):
+    for i in range(len(mem_arr)):
+        if mem_arr[i] == curr_process[2]:
+            mem_arr[i] = "."
+
 def NextFit(processes, t_mem_move, frame_size, frame):
     mem_arr = ["."] * frame_size
     queue = []
@@ -245,7 +286,7 @@ def NextFit(processes, t_mem_move, frame_size, frame):
             temp = [processes[i].arrivalTimes[j], 2, processes[i].name, processes[i].size, processes[i]]
             queue.append(temp)
 
-        for k in range(len(process[i].endTimes)):
+        for k in range(len(processes[i].endTimes)):
             temp = [int(processes[i].endTimes[j])+int(processes[i].arrivalTimes[j]), 1, processes[i].name, processes[i].size, processes[i]]
             queue.append(temp)
     queue.sort()
@@ -265,246 +306,78 @@ def NextFit(processes, t_mem_move, frame_size, frame):
             else:
                 print("time", str(t)+"ms: Process", curr_process[2], "arrived (requires", curr_process[3], "frames)" )
             
-            all_free_spots = free_spots_pre+free_spots_post
+            all_free_spots = pre_free_spots+post_free_spots
             
             fit = fit_check(curr_process,all_free_spots)
 
             if (fit):
-                print("time", str(time)+"ms: Placed process", current_process[2] + ":")
+                print("time", str(t)+"ms: Placed process", curr_process[2] + ":")
+                set_process(curr_process, mem_arr, pre_free_spots, post_free_spots)
+                print_memory(mem_arr, frame, frame_size)
+                final_process = update(mem_arr, frame_size, curr_process)
 
-            
-'''
+                queue.pop(0)
 
-
-
-#########
-
-
-def update_index(memoryArr, frameSize, current_process):
-
-    for i in range(0, len(memoryArr)):
-        if (memoryArr[i-1] == current_process[2]) & (memoryArr[i] != current_process[2]):
-            return i
-    return frameSize
-
-
-def update_last_index(memoryArr, frameSize):
-    for i in range(0, len(memoryArr)):
-        if memoryArr[i] == '.':
-            return i
-    return frameSize
-
-
-def check_for_fit(last_process, current_process, free_spots, memoryArr):
-    for i in range(0, len(free_spots)):
-        if (free_spots[i][1] >= current_process[3]):
-            return True
-    return False
-
-def find_free_spots(memoryArr, free_spots_pre, free_spots_post, last_process):
-    i = 0
-    while i < len(memoryArr):
-
-        if memoryArr[i] == ".":
-            index = i
-
-            num = 0
-
-            while (memoryArr[i] == "."):
-                num += 1
-                i += 1
-                if (i >= len(memoryArr)) | (i == last_process):
-                    break
-
-            if index >= last_process:
-                free_spots_post.append([index, num])
-            else:
-                free_spots_pre.append([index, num])
-
-        else:
-            i += 1
-
-def place_process(last_process, current_process, memoryArr, free_spots_pre, free_spots_post):
-
-    found = False
-    for i in range(0, len(free_spots_post)):
-        if free_spots_post[i][1] >= current_process[3]:
-            found = True
-
-            for j in range(free_spots_post[i][0], free_spots_post[i][0]+current_process[3]):
-                memoryArr[j] = current_process[2]
-
-            break
-
-    if found == False:
-        for i in range(0, len(free_spots_pre)):
-            if free_spots_pre[i][1] >= current_process[3]:
-                found = True
-
-                for j in range(free_spots_pre[i][0], free_spots_pre[i][0]+current_process[3]):
-                    memoryArr[j] = current_process[2]
-
-                break
-
-
-def remove_process(current_process, memoryArr):
-
-    for i in range(0, len(memoryArr)):
-        if memoryArr[i] == current_process[2]:
-            memoryArr[i] = '.'
-
-
-def NextFit(frame, frameSize, processes, tMemoryMove):
-
-    # define data structure
-    memoryArr = ['.']*frameSize
-    time = 0
-    free_spots_post = []
-    free_spots_pre = []
-
-    # set up queue
-    process_queue = []
-    for i in range(0, len(processes)):
-
-        # process arrivals
-        for j in range(0, len(processes[i].arrivalTimes)):
-            process_queue.append([processes[i].arrivalTimes[j], 2, processes[i].name, processes[i].size, processes[i]])
-
-        # process completions
-        for j in range(0, len(processes[i].endTimes)):
-            process_queue.append([int(processes[i].endTimes[j])+int(processes[i].arrivalTimes[j]), 1, processes[i].name, processes[i].size, processes[i]])
-
-    process_queue.sort()
-    # print(process_queue)
-
-    # update free spots
-    last_process = 0
-    find_free_spots(memoryArr, free_spots_pre, free_spots_post, last_process)
-    #print(free_spots)
-
-    # start simulation
-    print("time 0ms: Simulator Started (Contiguous -- Next-Fit)")
-    defrag_token = False
-
-    while len(process_queue) != 0:
-
-        # prepare for next process
-        current_process = process_queue[0]
-
-        # increment time
-        time = current_process[0]
-
-        # welcome next process
-        if current_process[1] == 2:
-            if defrag_token == False:
-                print("time", str(time)+"ms: Process", current_process[2], "arrived (requires", current_process[3], "frames)")
-            else:
-                defrag_token = False
-
-
-            # print(free_spots_pre)
-            # print(free_spots_post)
-            # print(last_process)
-
-            # check for fit
-            fit = check_for_fit(last_process, current_process, free_spots_pre+free_spots_post, memoryArr)
-
-            if fit == True:
-                # place process
-                print("time", str(time)+"ms: Placed process", current_process[2] + ":")
-                place_process(last_process, current_process, memoryArr, free_spots_pre, free_spots_post)
-                FirstFit.printMemory(frame, frameSize, memoryArr)
-                last_process = update_index(memoryArr, frameSize, current_process)
-
-
-                # current_process[4].size+=current_process[3]
-                process_queue.pop(0)
-
-                # update free spots
-                free_spots_pre = []
-                free_spots_post = []
-                find_free_spots(memoryArr, free_spots_pre, free_spots_post, last_process)
-
-                # print(free_spots_pre)
-                # print(free_spots_post)
-                # print(last_process)
+                pre_free_spots = []
+                post_free_spots = []
+                free_spots(final_process, mem_arr, pre_free_spots, post_free_spots)
 
             else:
+                sumation = 0
+                all_free_spots = free_spots_pre+free_spots_post
+                for i in range(len(all_free_spots)):
+                    sumation += free_spots[i][1]
+                
+                if sumation >= curr_process[3]:
+                    defrag_flag = True
+                    print("time", str(t)+"ms: Cannot place process", curr_process[2], "-- starting defragmentation!")
 
-                sum = 0
-                free_spots = free_spots_pre + free_spots_post
-                for i in range(0, len(free_spots)):
-                    sum += (free_spots[i][1])
 
-                if sum >= current_process[3]:
-                    defrag_token = True
-                    print("time", str(time)+"ms: Cannot place process", current_process[2], "-- starting defragmentation!")
+                    moved_frames = defrag(processes, t_mem_move, t, mem_arr)
+                    t = (moved_frames*t_mem_move) + t
 
-                    framesMoved = FirstFit.defragment(memoryArr, processes, time, tMemoryMove)
-                    time = (framesMoved*tMemoryMove)+time
+                    for i in range(len(queue)):
+                        queue[i][0] += t_mem_move*moved_frames
 
-                    for i in range(0, len(process_queue)):
-                        process_queue[i][0] += tMemoryMove*framesMoved
+                    final_process = update_last(mem_arr,frame_size)
+                    pre_free_spots = []
+                    post_free_spots = []
+                    free_spots(final_process, mem_arr, pre_free_spots, post_free_spots)
 
-                    last_process = update_last_index(memoryArr, frameSize)
-
-                    # update free spots
-                    free_spots_pre = []
-                    free_spots_post = []
-                    find_free_spots(memoryArr, free_spots_pre, free_spots_post, last_process)
-
-                    # print(free_spots_pre)
-                    # print(free_spots_post)
-
-                    # print(process_queue)
-                    # break
                     continue
 
                 else:
-                    print("time", str(time)+"ms: Cannot place process", current_process[2], "-- skipped!")
-                    # print(process_queue)
-                    process_queue.pop(0)
-                    for i in range(0, len(process_queue)):
-                        if current_process[2] in process_queue[i]:
+                    print("time", str(t)+"ms: Cannot place process", curr_process[2], "-- skipped!")
+                    queue.pop(0)
+                    for i in range(queue):
+                        if curr_process[2] in queue[i]:
                             index = i
                             break
-                    process_queue.pop(index)
-                    # print(process_queue)
-                    # break
+                    queue.pop(index)
+        elif (curr_process[1] == 1):
+            print("time", str(t)+"ms: Process", curr_process[2] + " removed:")
+            clear_process(curr_process, mem_arr)
+            print_memory(mem_arr, frame, frame_size)
 
-
-
-        elif current_process[1] == 1:
-            print("time", str(time)+"ms: Process", current_process[2] + " removed:")
-
-            # remove process
-            remove_process(current_process, memoryArr)
-            FirstFit.printMemory(frame, frameSize, memoryArr)
-            # current_process[4].completed+=1
-
-            process_queue.pop(0)
-
-            # update free spots
-            free_spots_pre = []
-            free_spots_post = []
-            find_free_spots(memoryArr, free_spots_pre, free_spots_post, last_process)
-
+            queue.pop(0)
+            pre_free_spots = []
+            post_free_spots = []
+            free_spots(final_process, mem_arr, pre_free_spots, post_free_spots)
 
     # end simulation
-    print("time", str(time)+ "ms: Simulator ended (Contiguous -- Next-Fit)\n")
-
-
-
-
-
-###########
+    print("time", str(t)+ "ms: Simulator ended (Contiguous -- Next-Fit)\n")
 
 
 
 
 
 
-                                
+
+
+
+
+
+
 
 def FirstFit(frame, frame_size, processes, tMemMove, contig):
     memArr = ['.']*frame_size
@@ -531,7 +404,8 @@ def FirstFit(frame, frame_size, processes, tMemMove, contig):
                 if(i.completed == len(i.endTimes)):
                     numComplete += 1
                     i.done = True
-                printMemory(frame, frame_size, memArr)
+                print_memory(memArr, frame, frame_size)
+
 
         #Arrival Checks
         for i in processes:
@@ -554,7 +428,7 @@ def FirstFit(frame, frame_size, processes, tMemMove, contig):
                             i.startTime = time
                             for k in range(i.size):
                                 memArr[loc+k] = i.name
-                            printMemory(frame, frame_size, memArr)
+                            print_memory(memArr, frame, frame_size)
                             break
                     
                     if(j == len(memArr)-1): #If At Capacity
@@ -575,7 +449,7 @@ def FirstFit(frame, frame_size, processes, tMemMove, contig):
                                         memArr[k+l] = i.name
                                     break
                             print("time %dms: Placed process %s:" %(time, i.name))
-                            printMemory(frame, frame_size, memArr)
+                            print_memory(memArr, frame, frame_size)
                             i.running = True
                         else: #Can't Defragment
                             counter = 0
@@ -619,7 +493,7 @@ def BestFit(frame, frame_size, processes, tMemMove, contig):
                 if(i.completed == len(i.endTimes)):
                     numComplete += 1
                     i.done = True
-                printMemory(frame, frame_size, memArr)
+                print_memory(memArr, frame, frame_size)
         #Checking if a process is arriving
         for i in processes:
             if(not i.done and i.arrivalTimes[i.completed] == time and not i.running):
@@ -653,7 +527,7 @@ def BestFit(frame, frame_size, processes, tMemMove, contig):
                             counters = dots[x]
                     for x in range(i.size):
                         memArr[loc+x] = i.name
-                    printMemory(frame, frame_size, memArr)
+                    print_memory(memArr, frame, frame_size)
                 elif(num_dots >= i.size): #Defragmentation
                     print("time %dms: Cannot place process %s -- starting defragmentation" %(time, i.name))
                     framesMoved = defragment(memArr, processes, time, tMemMove)
@@ -671,7 +545,7 @@ def BestFit(frame, frame_size, processes, tMemMove, contig):
                                 memArr[x+j] = i.name
                             break
                     print("time %dms: Placed process %s:" %(time, i.name))
-                    printMemory(frame, frame_size, memArr)
+                    print_memory(memArr, frame, frame_size)
                     i.running = True
                 else: #Cant be Defragmented
                     counter = 0
