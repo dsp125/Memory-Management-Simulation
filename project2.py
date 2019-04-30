@@ -87,6 +87,55 @@ def execute( inputFile, frames, frameSize, timeMove):
 	
     NonContiguous(frames, frameSize, procList, timeMove, False)
 
+## HELP
+def print_memory(mem_arr, frame, frame_size):
+    print("="* frame)
+    for i in range(frame_size):
+        if( ((i + 1) % frame) == 0 ):
+            if (i != 0):
+                print(mem_arr[i])
+        elif (i == frame_size - 1):
+            print(mem_arr[i])
+        else:
+            print(mem_arr[i], end = "")
+    print("="* frame)
+
+
+def defrag(processes, t_mem_move, t, mem_arr):
+    move = []
+    for i in range(len (mem_arr)):
+        inner_loop = len(mem_arr) - i - 1
+        for j in range(inner_loop):
+            if (mem_arr[j] == "."):
+                if (mem_arr[j+1] != "."):
+                    if ( mem_arr[j + 1] not in move):
+                        move.append(mem_arr[ j + 1])
+                    temp = mem_arr[j]
+                    mem_arr[j] = mem_arr[j + 1]
+                    mem_arr[j + 1] = temp
+
+    moved_frames = 0
+    for process in processes:
+        if process.name in move:
+            moved_frames += process.size
+    t += (moved_frames * t_mem_move)
+
+    output_frames = ""
+    for i in range(len(move)):
+        output_frames += move[i]
+        if (i != len(moved) - 1):
+            output_frames += ", "
+
+    print("time " + str(t) + "ms: Defragmentation complete (moved " + str(moved_frames) + " frames: " + output_frames + ")")
+    return moved_frames
+
+##ALGORITHMS
+def NonContiguous(processes, t_mem_move, frame_size, frame):
+    print("time 0ms: Simulator started (Non-Contiguous)")
+    compete = 0
+    mem_arr = ["."] * frame_size
+    t = 0
+
 
 
 ##INPUT PARSING AND MAIN EXECUTION
