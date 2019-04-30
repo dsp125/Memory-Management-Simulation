@@ -33,9 +33,9 @@ Test Terminal Inputs:
 ##CLASS AND FILE IMPORTS
 
 import sys
-import copy			#used for deepcopy of proc list
+import copy			#	used for deepcopy of proc list
 
-import process		#custom process class
+import process		#	custom process class
 
 ## REFRESH PROC LIST
 
@@ -67,11 +67,13 @@ def execute( inputFile, frames, frameSize, timeMove):
         procList.append(p)
     
     '''
+	
     for i in procList:
         print(i.name)
         for j in range(len(i.arrivalTimes)):
             print(i.arrivalTimes[j])
             print(i.endTimes[j])
+			
     '''
     
     procList_copy = copy.deepcopy(procList)
