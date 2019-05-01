@@ -76,14 +76,18 @@ def execute( inputFile, frames, frameSize, timeMove):
             if j == 0:
                 p.name = termList[j]
             elif j == 1:
-                p.size = int(termList[j])
+                try:
+                    p.size = int(termList[j])
+                except:
+                    print("Invalid size: Program Terminated")
+                    sys.exit()
             else:
                 time = termList[j].split('/')
                 try:
                     p.arrTimes.append(int(time[0]))
                     p.endTimes.append(int(time[1]))
                 except:
-                    print("Invalid input: Program Terminated")
+                    print("Invalid arrival or end times: Program Terminated")
                     sys.exit()
         #print(procList)
         #sys.stdout.flush()
