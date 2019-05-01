@@ -148,6 +148,37 @@ def defrag(processes, t_mem_move, t, mem_arr):
     print("time " + str(t) + "ms: Defragmentation complete (moved " + str(moved_frames) + " frames: " + output_frames + ")")
     return moved_frames
 
+def defrag_next_fit(processes, t_mem_move, t, mem_arr, curr_process_name):
+    move = []
+    for i in range(len (mem_arr)):
+        inner_loop = len(mem_arr) - i - 1
+        for j in range(inner_loop):
+            if (mem_arr[j] == "." and mem_arr[j+1] != "."):
+                if ( mem_arr[j + 1] not in move):
+                    move.append(mem_arr[ j + 1])
+                temp = mem_arr[j]
+                mem_arr[j] = mem_arr[j + 1]
+                mem_arr[j + 1] = temp
+
+    output_frames = ""
+    for i in range(len(move)):
+        output_frames += move[i]
+        if (i != len(move) - 1):
+            output_frames += ", "
+
+    
+    moved_frames = 0
+    for process in processes:
+        if process.name in move:
+            moved_frames += process.size
+    if(moved_frames!= 0):
+        print("time", str(t)+"ms: Cannot place process",curr_process_name, "-- starting defragmentation")
+    t += (moved_frames * t_mem_move)
+
+    if(moved_frames!=0):
+        print("time " + str(t) + "ms: Defragmentation complete (moved " + str(moved_frames) + " frames: " + output_frames + ")")
+    return moved_frames
+
 def free_spots(final_process, mem_arr, pre_free_spots, post_free_spots):
     i = 0
     while i < len(mem_arr):
@@ -358,8 +389,8 @@ def NextFit(processes, t_mem_move, frame_size, frame):
                 
                 if sumation >= curr_process[3]:
                     defrag_flag = True
-                    print("time", str(t)+"ms: Cannot place process", curr_process[2], "-- starting defragmentation")
-                    moved_frames = defrag(processes, t_mem_move, t, mem_arr)
+                    # print("time", str(t)+"ms: Cannot place process", curr_process[2], "-- starting defragmentation")
+                    moved_frames = defrag_next_fit(processes, t_mem_move, t, mem_arr, curr_process[2])
         
                     t = (moved_frames*t_mem_move) + t
 
