@@ -54,20 +54,36 @@ def refresh(processes):
 
 def execute( inputFile, frames, frameSize, timeMove):
     procList = []
+    
     for i in inputFile:
+        arrtimeIns = True
         if(i[len(i)-1] == '\n'):
             i = i[:len(i)-1] 
-        arr = i.split(' ')
+        splitspace = i.split(' ')
+        for j in splitspace:
+            j.split("\t")
+        termList = []
+        for sublist in splitspace:
+            for term in range(0,len(sublist)):
+                if (sublist[term] == ""):
+                    sublist.pop[term]
+                    
+            termList.append(sublist)
+        #print(termList)
+        #sys.stdout.flush()
         p = process.Process()
-        for j in range(len(arr)):
+        for j in range(len(termList)):
             if j == 0:
-                p.name = arr[j]
+                p.name = termList[j]
             elif j == 1:
-                p.size = int(arr[j])
+                p.size = int(termList[j])
             else:
-                time = arr[j].split('/')
+                time = termList[j].split('/')
                 p.arrTimes.append(int(time[0]))
                 p.endTimes.append(int(time[1]))
+                
+        #print(procList)
+        sys.stdout.flush()
         procList.append(p)
     
     procList_copy = copy.deepcopy(procList)
@@ -564,11 +580,12 @@ def BestFit(frame, frame_size, processes, tMemMove, contig):
 
 ##INPUT PARSING AND MAIN EXECUTION
 
+
 if __name__ == "__main__":
     #Argument Check
     if(len(sys.argv) != 5):
         print("Invalid number of arguments provided")
-        
+        """
         ##
         ##
         
@@ -579,7 +596,7 @@ if __name__ == "__main__":
         
         ##
         ##
-        
+        """
         sys.exit()
         
     else:
@@ -607,7 +624,7 @@ if __name__ == "__main__":
         except:
             print("Input file does not exist")
             sys.exit()
-
+        
         #Time for Memory Move Check
         timeMove = sys.argv[4]
         try:
@@ -615,5 +632,4 @@ if __name__ == "__main__":
         except:
             print("Invalid time provided for memory move (not integer)")
             sys.exit()
-    
     execute(inputFile, frames, frameSize, timeMove)
