@@ -79,11 +79,14 @@ def execute( inputFile, frames, frameSize, timeMove):
                 p.size = int(termList[j])
             else:
                 time = termList[j].split('/')
-                p.arrTimes.append(int(time[0]))
-                p.endTimes.append(int(time[1]))
-                
+                try:
+                    p.arrTimes.append(int(time[0]))
+                    p.endTimes.append(int(time[1]))
+                except:
+                    print("Invalid input: Program Terminated")
+                    sys.exit()
         #print(procList)
-        sys.stdout.flush()
+        #sys.stdout.flush()
         procList.append(p)
     
     procList_copy = copy.deepcopy(procList)
